@@ -78,6 +78,25 @@ function TransactionService (zoneService, logger, config, opbeatBackend) {
     logger.trace('onInvokeStart', 'source:', task.source, 'type:', task.type)
   }
   zoneService.spec.onInvokeStart = onInvokeStart
+
+  zoneService.spec.onExternalInvokeStart = function onExternalInvokeStart (task) {
+    // Not in Opbeat Zone
+    var trans = zoneService.zone.get('transaction')
+    if (!utils.isUndefined(trans) && !trans.ended) {
+      trans.debugLog('External execution start, Source:', task.source)
+      task.trace = trans.startTrace('External execution', 'debug', {'enableStackFrames': false})
+    }
+  }
+  zoneService.spec.onExternalInvokeEnd = function onExternalInvokeEnd (task) {
+    // Not in Opbeat Zone
+    var trans = zoneService.zone.get('transaction')
+    if (!utils.isUndefined(trans) && !trans.ended) {
+      trans.debugLog('External execution end, Source:', task.source)
+    }
+    if (task.trace && !task.trace.ended) {
+      task.trace.end()
+    }
+  }
 }
 
 TransactionService.prototype.getTransaction = function (id) {
