@@ -14,6 +14,7 @@ ServiceContainer.prototype.initialize = function () {
   var configService = this.services.configService
   var logger = this.services.logger
   var zoneService = this.services.zoneService
+  zoneService.initialize(window.Zone.current)
 
   var opbeatBackend = this.services.opbeatBackend = this.serviceFactory.getOpbeatBackend()
   var transactionService = this.services.transactionService = this.services.transactionService = new TransactionService(zoneService, this.services.logger, configService, opbeatBackend)
@@ -39,7 +40,7 @@ ServiceContainer.prototype.initialize = function () {
 ServiceContainer.prototype.createZoneService = function () {
   var logger = this.services.logger
 
-  return new ZoneService(window.Zone.current, logger, this.services.configService)
+  return new ZoneService(logger, this.services.configService)
 }
 
 module.exports = ServiceContainer

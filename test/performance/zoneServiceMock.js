@@ -35,5 +35,7 @@ function ZoneServiceMock () {
   this.getCurrentZone = function () {
     return this.zone
   }
+
+  this.initialize = function () {}
 }
 module.exports = ZoneServiceMock

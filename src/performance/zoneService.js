@@ -9,7 +9,7 @@ var XMLHttpRequest_send = 'XMLHttpRequest.send'
 
 var opbeatDataSymbol = patchUtils.opbeatSymbol('opbeatData')
 
-function ZoneService (zone, logger, config) {
+function ZoneService (logger, config) {
   this.events = new Subscription()
 
   var nextId = 0
@@ -24,10 +24,33 @@ function ZoneService (zone, logger, config) {
     onCancelTask: noop,
     onHandleError: noop,
     onInvokeStart: noop,
-    onInvokeEnd: noop
+    onInvokeEnd: noop,
+    onExternalInvokeStart: noop,
+    onExternalInvokeEnd: noop
+  }
+  var externalZoneName = 'opbeatExternalZone'
+  window['__rootZoneSpec__'] = {
+    name: externalZoneName,
+    onInvoke: function (parentZoneDelegate, currentZone, targetZone, delegate, applyThis, applyArgs, source) {
+      var task = {source: source}
+      spec.onExternalInvokeStart(task)
+      var result = delegate.apply(applyThis, applyArgs)
+      spec.onExternalInvokeEnd(task)
+      return result
+    },
+    onInvokeTask: function (parentZoneDelegate, currentZone, targetZone, task, applyThis, applyArgs) {
+      if (targetZone.name === externalZoneName) {
+        spec.onExternalInvokeStart(task)
+      }
+      var result = parentZoneDelegate.invokeTask(targetZone, task, applyThis, applyArgs)
+      if (targetZone.name === externalZoneName) {
+        spec.onExternalInvokeEnd(task)
+      }
+      return result
+    }
   }
 
-  var zoneConfig = {
+  this.zoneConfig = {
     name: 'opbeatRootZone',
     onScheduleTask: function (parentZoneDelegate, currentZone, targetZone, task) {
       if (task.type === 'eventTask' && task.data.eventName === 'opbeatImmediatelyFiringEvent') {
@@ -162,20 +185,23 @@ function ZoneService (zone, logger, config) {
 
   //     var childZoneData = {name: childZone.name}
 
-  //     if (targetZone._properties['opbeatZoneData']) {
-  //       targetZone._properties['opbeatZoneData'].children.push(childZoneData)
-  //     } else {
-  //       targetZone._properties['opbeatZoneData'] = {
-  //         name: targetZone.name,
-  //         children: [childZoneData]
-  //       }
-  //     }
-  //     console.log('onFork:opbeatZoneData:', targetZone._properties['opbeatZoneData'])
-  //     return childZone
-  //   }
-  // }
+//     if (targetZone._properties['opbeatZoneData']) {
+//       targetZone._properties['opbeatZoneData'].children.push(childZoneData)
+//     } else {
+//       targetZone._properties['opbeatZoneData'] = {
+//         name: targetZone.name,
+//         children: [childZoneData]
+//       }
+//     }
+//     console.log('onFork:opbeatZoneData:', targetZone._properties['opbeatZoneData'])
+//     return childZone
+//   }
+// }
+}
+
+ZoneService.prototype.initialize = function initialize (zone) {
   this.outer = zone
-  this.zone = zone.fork(zoneConfig)
+  this.zone = zone.fork(this.zoneConfig)
 }
 
 ZoneService.prototype.set = function (key, value) {
