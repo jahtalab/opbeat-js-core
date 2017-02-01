@@ -146,11 +146,11 @@ function ZoneService (zone, logger, config) {
         }
       }
       return parentZoneDelegate.cancelTask(targetZone, task)
+    },
+    onHandleError: function (parentZoneDelegate, currentZone, targetZone, error) {
+      spec.onHandleError(error)
+      return parentZoneDelegate.handleError(targetZone, error)
     }
-  // onHandleError: function (parentZoneDelegate, currentZone, targetZone, error) {
-  //   spec.onHandleError(error)
-  //   parentZoneDelegate.handleError(targetZone, error)
-  // }
   }
 
   // if (config.get('debug') === true) {
