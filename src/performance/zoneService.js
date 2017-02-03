@@ -29,6 +29,13 @@ function ZoneService (logger, config) {
     onExternalInvokeEnd: noop
   }
   var externalZoneName = 'opbeatExternalZone'
+  var opbeatDebug = window.opbeatDebug = {
+    executionStart: window.performance.now(),
+    executionTimes: [],
+    log: [],
+    setTimeoutDelay: [],
+    totalExecutionTime: 0
+  }
   window['__rootZoneSpec__'] = {
     name: externalZoneName,
     onInvoke: function (parentZoneDelegate, currentZone, targetZone, delegate, applyThis, applyArgs, source) {
@@ -39,6 +46,7 @@ function ZoneService (logger, config) {
       return result
     },
     onInvokeTask: function (parentZoneDelegate, currentZone, targetZone, task, applyThis, applyArgs) {
+      var start = window.performance.now()
       if (targetZone.name === externalZoneName) {
         spec.onExternalInvokeStart(task)
       }
@@ -46,6 +54,12 @@ function ZoneService (logger, config) {
       if (targetZone.name === externalZoneName) {
         spec.onExternalInvokeEnd(task)
       }
+      var end = window.performance.now()
+      var duration = end - start
+      opbeatDebug.totalExecutionTime = opbeatDebug.totalExecutionTime + duration
+      opbeatDebug.executionTimes.push({start: start,end: end,duration: duration,totalExecutionTime: opbeatDebug.totalExecutionTime})
+      var totalActiveTime = end - opbeatDebug.executionStart
+      opbeatDebug.log.push('totalExecutionTime:' + opbeatDebug.totalExecutionTime + ', totalActiveTime: ' + totalActiveTime + ', %: ' + (opbeatDebug.totalExecutionTime / totalActiveTime) * 100)
       return result
     }
   }
@@ -75,6 +89,7 @@ function ZoneService (logger, config) {
 
         if (task.source === 'setTimeout') {
           if (task.data.args[1] === 0 || typeof task.data.args[1] === 'undefined') {
+            opbeatTask.scheduleTime = window.performance.now()
             task[opbeatTaskSymbol] = opbeatTask
             spec.onScheduleTask(opbeatTask)
           }
@@ -148,6 +163,8 @@ function ZoneService (logger, config) {
         }
       } else if (task[opbeatTaskSymbol] && (task.source === 'setTimeout')) {
         spec.onBeforeInvokeTask(task[opbeatTaskSymbol])
+        var end = window.performance.now()
+        opbeatDebug.setTimeoutDelay.push('activeTime: ' + (end - opbeatDebug.executionStart) + ', delay: ' + (end - task[opbeatTaskSymbol].scheduleTime))
         result = parentZoneDelegate.invokeTask(targetZone, task, applyThis, applyArgs)
         spec.onInvokeTask(task[opbeatTaskSymbol])
       } else {
