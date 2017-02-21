@@ -20,6 +20,22 @@ function isValidTrace (transaction, trace) {
   return (d < traceThreshold && d > 0 && trace._start <= transaction._rootTrace._end && trace._end <= transaction._rootTrace._end)
 }
 
+function getFirstPaint () {
+  var firstPaint = 0
+  if (window.chrome && window.chrome.loadTimes) {
+    // Convert to ms
+    firstPaint = window.chrome.loadTimes().firstPaintTime * 1000
+    // firstPaint = firstPaint - (window.chrome.loadTimes().startLoadTime * 1000)
+    return firstPaint
+  } else if (typeof window.performance.timing.msFirstPaint === 'number') {
+    firstPaint = window.performance.timing.msFirstPaint
+    // firstPaint = firstPaint - window.performance.timing.navigationStart
+    return firstPaint
+  } else {
+    return
+  }
+}
+
 module.exports = function captureHardNavigation (transaction) {
   if (transaction.isHardNavigation && window.performance && window.performance.timing) {
     var baseTime = window.performance.timing.fetchStart
@@ -76,6 +92,12 @@ module.exports = function captureHardNavigation (transaction) {
     var metrics = {
       timeToComplete: transaction._rootTrace._end
     }
+
+    var firstPaint = getFirstPaint()
+    if (typeof firstPaint !== 'undefined' && firstPaint > baseTime) {
+      metrics.timeToFirstPaint = firstPaint - baseTime
+    }
+
     navigationTimingKeys.forEach(function (timingKey) {
       var m = timings[timingKey]
       if (m) {

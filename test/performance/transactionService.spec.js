@@ -219,4 +219,21 @@ describe('TransactionService', function () {
     tr = transactionService.sendPageLoadMetrics('hamid-test')
     expect(tr.name).toBe('hamid-test')
   })
+
+  it('should capture _metrics', function (done) {
+    // var iframe = document.getElementById('context')
+
+    // setTimeout(function () {
+    // document.addEventListener('load', function () {
+    transactionService = new TransactionService(zoneServiceMock, logger, config)
+    var tr
+
+    tr = transactionService.sendPageLoadMetrics()
+    var metrics = tr.contextInfo._metrics
+    expect(metrics.timeToFirstPaint).toBeLessThan(5 * 60 * 1000)
+    expect(metrics.timeToFirstPaint).toBeGreaterThan(0)
+    done()
+  // })
+  // }, 5000)
+  })
 })

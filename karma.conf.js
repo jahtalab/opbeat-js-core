@@ -56,7 +56,7 @@ module.exports = function (config) {
       'test/utils/polyfill.js',
       'node_modules/zone.js/dist/zone.js',
       specPattern,
-      { pattern: 'test/exceptions/data/*.js', included: false, watched: false },
+      // { pattern: 'test/exceptions/data/*.js', included: false, watched: false },
       { pattern: 'src/**/*.js', included: false, watched: true }
     ],
     frameworks: ['browserify', 'jasmine'],
@@ -72,6 +72,8 @@ module.exports = function (config) {
     browsers: [], // Chrome, Firefox, PhantomJS2
     captureTimeout: 120000, // on saucelabs it takes some time to capture browser
     reporters: ['spec', 'failed'],
+    // runInParent: true,
+    useIframe: true,
     browserify: {
       debug: true,
       configure: function (bundle) {
