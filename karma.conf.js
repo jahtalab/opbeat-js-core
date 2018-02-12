@@ -1,6 +1,11 @@
 module.exports = function (config) {
   var specPattern = 'test/!(e2e)/*.spec.js'
   var customLaunchers = {
+    'SL_CHROME63': {
+      base: 'SauceLabs',
+      browserName: 'chrome',
+      version: '63'
+    },
     'SL_CHROME': {
       base: 'SauceLabs',
       browserName: 'chrome',
